@@ -1,0 +1,103 @@
+{
+  "meta": {
+    "theme": "videojuegos",
+    "description": "Base documental de videojuegos. Archivo único que contiene datos y metadatos para operaciones CRUD.",
+    "nextId": 6,
+    "schema": {
+      "id": "int (autoincremental, único)",
+      "title": "string",
+      "developer": "string",
+      "releaseYear": "int",
+      "genres": "array[string]",
+      "platforms": "array[string]",
+      "multiplayer": "boolean",
+      "priceCents": "int (precio en centavos)",
+      "available": "boolean",
+      "rating": {
+        "score": "number (0.0-10.0)",
+        "votes": "int"
+      },
+      "tags": "array[string]",
+      "metadata": "object (languages, esrb, sizeMB, etc.)",
+      "description": "string"
+    },
+    "notes": "Todas las operaciones de la app usan 'id' autoincremental. El fichero puede contener un wrapper con 'meta' y 'games'."
+  },
+  "games": [
+    {
+      "id": 1,
+      "title": "Aventuras en Pixelandia",
+      "developer": "IndieStudio",
+      "releaseYear": 2021,
+      "genres": ["Aventura", "Plataformas"],
+      "platforms": ["Windows", "Linux"],
+      "multiplayer": false,
+      "priceCents": 1499,
+      "available": true,
+      "rating": { "score": 8.4, "votes": 1245 },
+      "tags": ["pixel", "retro", "familia"],
+      "metadata": { "languages": ["es", "en", "fr"], "esrb": "E", "sizeMB": 256 },
+      "description": "Plataformas clásicas con puzzles y una historia encantadora."
+    },
+    {
+      "id": 2,
+      "title": "Campeonato Intergaláctico",
+      "developer": "SpaceGames S.A.",
+      "releaseYear": 2023,
+      "genres": ["Racing", "Multijugador"],
+      "platforms": ["Windows", "PS5", "Xbox"],
+      "multiplayer": true,
+      "priceCents": 2999,
+      "available": true,
+      "rating": { "score": 9.1, "votes": 9823 },
+      "tags": ["online", "competitivo", "simulación"],
+      "metadata": { "languages": ["en", "es"], "esrb": "T", "sizeMB": 48200 },
+      "description": "Carreras espaciales competitivas con físicas avanzadas y torneos online."
+    },
+    {
+      "id": 3,
+      "title": "Puzzle Garden",
+      "developer": "CalmWorks",
+      "releaseYear": 2019,
+      "genres": ["Puzzle", "Casual"],
+      "platforms": ["Android", "iOS", "Windows"],
+      "multiplayer": false,
+      "priceCents": 0,
+      "available": true,
+      "rating": { "score": 7.6, "votes": 430 },
+      "tags": ["relajante", "un jugador"],
+      "metadata": { "languages": ["es", "en", "de"], "esrb": "E", "sizeMB": 120 },
+      "description": "Rompecabezas relajantes con niveles cortos y modo sin conexión."
+    },
+    {
+      "id": 4,
+      "title": "Legado de las Mil Llamas: La Odisea Infinita y otras historias con títulos excesivamente largos para pruebas",
+      "developer": "LongNameGames International Ltd.",
+      "releaseYear": 2017,
+      "genres": ["RPG", "Aventura"],
+      "platforms": ["Windows"],
+      "multiplayer": false,
+      "priceCents": 1999,
+      "available": false,
+      "rating": { "score": 8.0, "votes": 2100 },
+      "tags": ["épico", "historia"],
+      "metadata": { "languages": ["en", "es"], "esrb": "T", "sizeMB": 10240 },
+      "description": "Juego con nombre muy largo usado para probar el manejo de cadenas y la presentación en la UI."
+    },
+    {
+      "id": 5,
+      "title": "¡Furia & Fuegos! -- edición especial ♠♥♦♣",
+      "developer": "Studio:Exótico",
+      "releaseYear": 2020,
+      "genres": ["Acción", "Arcade"],
+      "platforms": ["Switch", "Windows"],
+      "multiplayer": true,
+      "priceCents": 499,
+      "available": true,
+      "rating": { "score": 6.9, "votes": 89 },
+      "tags": [],
+      "metadata": { "languages": ["es", "pt"], "esrb": "E10+" },
+      "description": "Edición que incluye caracteres especiales en el título y developer para probar sanitización y renderizado. Algunos campos opcionales (sizeMB) no están presentes."
+    }
+  ]
+}
