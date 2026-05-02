@@ -1,162 +1,114 @@
 package com.juegos;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
-/**
- * GestorDocumentos: lógica de negocio para operaciones CRUD sobre Videojuego.
- * Delegará la persistencia a JsonDatabase.
- */
 public class GestorDocumentos {
 
-    private final JsonDatabase db;
+    private final GestorArchivoJson db;
 
-    public static class GestorException extends RuntimeException {
-        public GestorException(String message) { super(message); }
-        public GestorException(String message, Throwable cause) { super(message, cause); }
-    }
-
-    /**
-     * Crea un gestor usando la ruta por defecto.
-     */
     public GestorDocumentos() {
-        this(JsonDatabase.getInstance().getFilePath());
+        this.db = new GestorArchivoJson();
     }
 
-    /**
-     * Crea un gestor con ruta personalizada.
-     */
-    public GestorDocumentos(Path filePath) {
-        this.db = JsonDatabase.getInstance(filePath);
-    }
-
-    // Validaciones básicas de campos obligatorios
-    private void validarCamposObligatorios(Videojuego v) {
-        if (v == null) throw new GestorException("Videojuego no puede ser nulo");
-        if (v.getTitle() == null || v.getTitle().trim().isEmpty()) throw new GestorException("title es obligatorio");
-        if (v.getDeveloper() == null || v.getDeveloper().trim().isEmpty()) throw new GestorException("developer es obligatorio");
-        if (v.getReleaseYear() <= 0) throw new GestorException("releaseYear es obligatorio y debe ser positivo");
-    }
-
-    private int calcularNextId(List<Videojuego> lista) {
-        return lista.stream().map(Videojuego::getId).max(Comparator.naturalOrder()).orElse(0) + 1;
-    }
-
-    /**
-     * Añade un documento (Videojuego). Asigna id autoincremental y guarda.
-     * En este modelo el campo 'title' se considera único (case-insensitive).
-     */
-    public synchronized Videojuego añadirDocumento(Videojuego nuevo) {
-        validarCamposObligatorios(nuevo);
+    public Videojuego anadirDocumento(Videojuego nuevo) {
+        if (nuevo.getTitulo() == null || nuevo.getTitulo().trim().isEmpty()) {
+            throw new RuntimeException("El título es obligatorio");
+        }
 
         List<Videojuego> lista = db.cargarDatos();
 
-        // Unicidad por título (ignora mayúsculas/minúsculas)
-        String tLower = nuevo.getTitle().trim().toLowerCase(Locale.ROOT);
-        boolean existe = lista.stream().anyMatch(v -> v.getTitle() != null && v.getTitle().trim().toLowerCase(Locale.ROOT).equals(tLower));
+        // Unicidad por título
+        String tLower = nuevo.getTitulo().trim().toLowerCase(Locale.ROOT);
+        boolean existe = lista.stream()
+            .anyMatch(v -> v.getTitulo().toLowerCase(Locale.ROOT).equals(tLower));
         if (existe) {
-            throw new GestorException("Ya existe un videojuego con el mismo title: " + nuevo.getTitle());
+            throw new RuntimeException("Ya existe un juego con ese título");
         }
 
-        int id = calcularNextId(lista);
-        try {
-            nuevo.setId(id);
-        } catch (IllegalArgumentException iae) {
-            throw new GestorException("ID inválido: " + iae.getMessage(), iae);
-        }
+        int nextId = lista.stream()
+            .mapToInt(Videojuego::getId)
+            .max().orElse(0) + 1;
+        nuevo.setId(nextId);
 
         lista.add(nuevo);
         db.guardarDatos(lista);
         return nuevo;
     }
 
-    /**
-     * Modifica un documento existente identificado por id. Reemplaza campos con los del objeto 'actualizado'.
-     */
-    public synchronized Videojuego modificarDocumento(int id, Videojuego actualizado) {
-        if (id <= 0) throw new GestorException("id inválido");
-        validarCamposObligatorios(actualizado);
+    public Videojuego modificarDocumento(int id, Videojuego actualizado) {
+        if (actualizado.getTitulo() == null || actualizado.getTitulo().trim().isEmpty()) {
+            throw new RuntimeException("El título es obligatorio");
+        }
 
         List<Videojuego> lista = db.cargarDatos();
-        Optional<Videojuego> opt = lista.stream().filter(v -> v.getId() == id).findFirst();
-        if (!opt.isPresent()) throw new GestorException("No se encontró documento con id=" + id);
+        Videojuego existente = lista.stream()
+            .filter(v -> v.getId() == id)
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("No se encontró el juego con id=" + id));
 
-        // Unicidad: título no debe duplicar otro documento distinto
-        String nuevoTituloLower = actualizado.getTitle().trim().toLowerCase(Locale.ROOT);
-        boolean dup = lista.stream().anyMatch(v -> v.getId() != id && v.getTitle() != null && v.getTitle().trim().toLowerCase(Locale.ROOT).equals(nuevoTituloLower));
-        if (dup) throw new GestorException("Otro videojuego ya tiene el mismo title: " + actualizado.getTitle());
+        // Comprobar que no duplica título de otro
+        String tLower = actualizado.getTitulo().trim().toLowerCase(Locale.ROOT);
+        boolean dup = lista.stream()
+            .anyMatch(v -> v.getId() != id && v.getTitulo().toLowerCase(Locale.ROOT).equals(tLower));
+        if (dup) {
+            throw new RuntimeException("Otro juego ya tiene ese título");
+        }
 
-        Videojuego existente = opt.get();
-        // Actualizamos campo a campo para mantener coherencia
-        existente.setTitle(actualizado.getTitle());
-        existente.setDeveloper(actualizado.getDeveloper());
-        existente.setReleaseYear(actualizado.getReleaseYear());
-        existente.setGenres(actualizado.getGenres());
-        existente.setPlatforms(actualizado.getPlatforms());
-        existente.setMultiplayer(actualizado.isMultiplayer());
-        existente.setPriceCents(actualizado.getPriceCents());
-        existente.setAvailable(actualizado.isAvailable());
-        existente.setRating(actualizado.getRating());
-        existente.setTags(actualizado.getTags());
-        existente.setMetadata(actualizado.getMetadata());
-        existente.setDescription(actualizado.getDescription());
+        existente.setTitulo(actualizado.getTitulo());
+        existente.setDesarrollador(actualizado.getDesarrollador());
+        existente.setAnio(actualizado.getAnio());
+        existente.setGeneros(actualizado.getGeneros());
+        existente.setPlataformas(actualizado.getPlataformas());
+        existente.setPrecio(actualizado.getPrecio());
+        existente.setDisponible(actualizado.isDisponible());
+        existente.setDescripcion(actualizado.getDescripcion());
 
         db.guardarDatos(lista);
         return existente;
     }
 
-    /**
-     * Elimina un documento por id. Devuelve true si se eliminó.
-     */
-    public synchronized boolean eliminarDocumento(int id) {
-        if (id <= 0) throw new GestorException("id inválido");
-
+    public void eliminarDocumento(int id) {
         List<Videojuego> lista = db.cargarDatos();
-        boolean removed = lista.removeIf(v -> v.getId() == id);
-        if (!removed) throw new GestorException("No se encontró documento con id=" + id);
+        boolean eliminado = lista.removeIf(v -> v.getId() == id);
+        if (!eliminado) {
+            throw new RuntimeException("No se encontró el juego con id=" + id);
+        }
         db.guardarDatos(lista);
-        return true;
     }
 
-    /**
-     * Búsqueda parcial case-insensitive por campo especificado.
-     * Campos soportados: title, developer, genres, platforms, tags, description
-     */
-    public synchronized List<Videojuego> buscarPorCampo(String campo, String valor) {
-        if (campo == null || valor == null) return new ArrayList<>();
+    public List<Videojuego> buscarPorCampo(String campo, String valor) {
+        if (valor == null || valor.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
         String vLower = valor.toLowerCase(Locale.ROOT);
         List<Videojuego> lista = db.cargarDatos();
 
-        switch (campo) {
-            case "title":
-                return lista.stream().filter(v -> v.getTitle() != null && v.getTitle().toLowerCase(Locale.ROOT).contains(vLower)).collect(Collectors.toList());
-            case "developer":
-                return lista.stream().filter(v -> v.getDeveloper() != null && v.getDeveloper().toLowerCase(Locale.ROOT).contains(vLower)).collect(Collectors.toList());
-            case "genres":
-                return lista.stream().filter(v -> v.getGenres() != null && v.getGenres().stream().anyMatch(g -> g.toLowerCase(Locale.ROOT).contains(vLower))).collect(Collectors.toList());
-            case "platforms":
-                return lista.stream().filter(v -> v.getPlatforms() != null && v.getPlatforms().stream().anyMatch(p -> p.toLowerCase(Locale.ROOT).contains(vLower))).collect(Collectors.toList());
-            case "tags":
-                return lista.stream().filter(v -> v.getTags() != null && v.getTags().stream().anyMatch(t -> t.toLowerCase(Locale.ROOT).contains(vLower))).collect(Collectors.toList());
-            case "description":
-                return lista.stream().filter(v -> v.getDescription() != null && v.getDescription().toLowerCase(Locale.ROOT).contains(vLower)).collect(Collectors.toList());
-            default:
-                return new ArrayList<>();
-        }
+        return lista.stream().filter(v -> {
+            switch (campo) {
+                case "titulo":
+                    return v.getTitulo() != null && v.getTitulo().toLowerCase().contains(vLower);
+                case "desarrollador":
+                    return v.getDesarrollador() != null && v.getDesarrollador().toLowerCase().contains(vLower);
+                case "descripcion":
+                    return v.getDescripcion() != null && v.getDescripcion().toLowerCase().contains(vLower);
+                default:
+                    return false;
+            }
+        }).collect(Collectors.toList());
     }
 
-    public synchronized List<Videojuego> obtenerTodos() {
-        return new ArrayList<>(db.cargarDatos());
+    public List<Videojuego> obtenerTodos() {
+        return db.cargarDatos();
     }
 
-    public synchronized Videojuego obtenerPorId(int id) {
-        if (id <= 0) return null;
-        return db.cargarDatos().stream().filter(v -> v.getId() == id).findFirst().orElse(null);
+    public Videojuego obtenerPorId(int id) {
+        return db.cargarDatos().stream()
+            .filter(v -> v.getId() == id)
+            .findFirst()
+            .orElse(null);
     }
 }

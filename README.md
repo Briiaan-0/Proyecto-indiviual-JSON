@@ -1,285 +1,230 @@
-# Proyecto: Gestión de Videojuegos (JSON)
+# Proyecto: Gestion de Videojuegos (Base de Datos Documental JSON)
 
-Resumen
--------
-Proyecto de ejemplo que guarda una colección de videojuegos en un único fichero JSON. Incluye POJOs, capa de persistencia con Gson, lógica CRUD y una interfaz Swing simple.
-
-Estructura breve
------------------
-- Fichero de datos: `src/main/resources/videojuegos_db.json` (objeto con `meta` opcional y array `games`).
-- Código principal: `src/main/java/com/juegos` (clases: `Videojuego`, `JsonDatabase`, `GestorDocumentos`, `MainFrame`, `Main`).
-
-Formato JSON (resumen)
-----------------------
-Cada documento representa un videojuego y contiene campos como `id`, `title`, `developer`, `releaseYear`, `genres`, `platforms`, `priceCents`, `available`, `rating`, `description`.
-La app lee tanto arrays a nivel superior como objetos con la clave `games`.
-
-Instalación y ejecución
------------------------
-Requisitos: Java 17 y Maven 3.9+
-
-Comandos para compilar y ejecutar:
-
-```powershell
-mvn clean compile
-mvn exec:java -Dexec.mainClass="com.juegos.Main"
-```
-
-Uso básico (resumido)
----------------------
-- Añadir: completar los campos obligatorios y pulsar `Añadir`.
-- Modificar: seleccionar una fila, editar y pulsar `Modificar`.
-- Eliminar: seleccionar y pulsar `Eliminar` (confirmar).
-- Buscar: elegir campo y escribir término (búsqueda parcial, case-insensitive).
-
-Notas técnicas y mejoras sugeridas
---------------------------------
-- La persistencia está en `JsonDatabase` (Gson, pretty printing). Actualmente la escritura guarda la lista; si quieres que se preserve y actualice explícitamente `meta.nextId`, puedo implementarlo.
-- Se recomienda añadir pruebas unitarias y configurar un `fat-jar` (maven-shade) para distribución.
-
-Soporte
--------
-Dime si prefieres que vuelva a generar un `docs/TECHNICAL_DOCUMENTATION.md` separado, implemente la preservación de `meta.nextId`, o añada empaquetado en `pom.xml`.
-
-Fin.
-
-# Proyecto: Gestión documental de Videojuegos (JSON + Gson)
-
-Este repositorio contiene una aplicación Java standalone (Swing) para gestionar una base documental de videojuegos almacenada en un único archivo JSON. Está diseñada para Java 17 y Maven 3.9+.
-
-Contenido principal
-- `src/main/java/com/juegos/Videojuego.java` — POJO que representa un videojuego (con validaciones, toString, equals/hashCode).
-- `src/main/java/com/juegos/JsonDatabase.java` — gestor de lectura/escritura del fichero JSON usando Gson (pretty printing).
-- `src/main/java/com/juegos/GestorDocumentos.java` — lógica CRUD (añadir, modificar, eliminar, buscar, obtener todos).
-- `src/main/java/com/juegos/MainFrame.java` — interfaz gráfica Swing (JFrame) con formulario, tabla y operaciones.
-- `src/main/java/com/juegos/Main.java` — lanzador de la aplicación.
-- `src/main/resources/videojuegos_db.json` — archivo JSON único con datos iniciales.
-- `TESTING.md` — pasos sugeridos para pruebas manuales.
-- `docs/TECHNICAL_DOCUMENTATION.md` — documentación técnica completa (estructura JSON, modelo, comparaciones, manuales y conclusiones).
-
-Uso rápido
-
-1. Compilar:
-```powershell
-mvn clean compile
-```
-
-2. Ejecutar:
-```powershell
-mvn exec:java -Dexec.mainClass="com.juegos.Main"
-```
-
-Si prefieres, usa tu IDE para ejecutar la clase `com.juegos.Main`.
-
-Detalles relevantes
-- El JSON está en `src/main/resources/videojuegos_db.json`. La aplicación lee un wrapper con `meta` y `games` si existe, o un array top-level.
-- Las operaciones de persistencia usan Gson; `JsonDatabase` lanza `JsonDatabaseException` en errores de I/O o sintaxis JSON.
-- `GestorDocumentos` delega la lectura/escritura a `JsonDatabase` y aplica validaciones de negocio (campos obligatorios, unicidad por `title`, etc.).
-
-Próximos pasos sugeridos
-- Preservar `meta.nextId` en el fichero JSON al guardar (actualmente la app guarda la lista; si quieres lo adapto para mantener `meta`).
-- Generar un `fat-jar` con `maven-shade-plugin` para distribución.
-*** Begin Documentation
-
-# Documentación Técnica — Proyecto Gestión de Videojuegos
-
-Última actualización: 30-04-2026
-
-Resumen
--------
-Esta documentación describe la estructura JSON usada por la aplicación, el modelo de datos Java (POJOs), la comparación entre formatos (JSON, XML, SQL), instrucciones de instalación y uso, pasos de pruebas manuales y conclusiones.
-
-Contenido obligatorio incluido:
-
-1. Estructura del JSON
-2. Modelo de datos (clases Java)
-3. Comparación XML vs JSON vs SQL
-4. Capturas de funcionamiento (nombres / sugerencias)
-5. Manual de usuario
-6. Manual de instalación
-7. Gestión de tareas GitHub (placeholders)
-8. Conclusión personal
+Aplicacion Java con interfaz grafica Swing que gestiona una coleccion de videojuegos usando un unico archivo JSON como base de datos documental. Desarrollado con Java 17, Maven y Gson.
 
 ---
 
-## 1) Estructura del JSON
+## 1. Estructura del JSON
 
-La aplicación usa un único fichero JSON por defecto en `src/main/resources/videojuegos_db.json`. El formato aceptado es:
+El archivo src/main/resources/videojuegos_db.json es la base de datos completa. Es un array plano de objetos; cada objeto representa un videojuego.
 
-- Objeto raíz con campos opcionales `meta` y `games`.
-- `meta`: objeto con metadatos (tema, descripción, nextId, schema descriptivo).
-- `games`: array de objetos; cada objeto representa un videojuego.
+Ejemplo:
 
-Campos por documento (tipos):
+[
+  {
+    "id": 1,
+    "titulo": "Aventuras en Pixelandia",
+    "desarrollador": "IndieStudio",
+    "anio": 2021,
+    "generos": ["Aventura", "Plataformas"],
+    "plataformas": ["Windows", "Linux"],
+    "precio": 14.99,
+    "disponible": true,
+    "descripcion": "Plataformas clasicas con puzzles."
+  }
+]
 
-- `id`: int (autoincremental, único)
-- `title`: string
-- `developer`: string
-- `releaseYear`: int
-- `genres`: array[string]
-- `platforms`: array[string]
-- `multiplayer`: boolean
-- `priceCents`: int (precio en centavos)
-- `available`: boolean
-- `rating`: object { score: number, votes: int }
-- `tags`: array[string]
-- `metadata`: object (languages: array[string], esrb: string, sizeMB: int, ...)
-- `description`: string
+Campos por documento:
 
-Ejemplo (fragmento del fichero `src/main/resources/videojuegos_db.json` incluido en este repositorio):
+- id: int - Identificador unico autoincremental
+- titulo: string - Nombre del videojuego
+- desarrollador: string - Estudio desarrollador
+- anio: int - Ano de lanzamiento
+- generos: array de strings - Lista de generos
+- plataformas: array de strings - Lista de plataformas
+- precio: number - Precio en euros
+- disponible: boolean - Esta a la venta?
+- descripcion: string - Descripcion del juego
 
-```json
-{
-	"meta": { "theme": "videojuegos", "nextId": 6 },
-	"games": [
-		{
-			"id": 1,
-			"title": "Aventuras en Pixelandia",
-			"developer": "IndieStudio",
-			"releaseYear": 2021,
-			"genres": ["Aventura", "Plataformas"],
-			"platforms": ["Windows", "Linux"],
-			"multiplayer": false,
-			"priceCents": 1499,
-			"available": true,
-			"rating": { "score": 8.4, "votes": 1245 },
-			"tags": ["pixel", "retro"],
-			"metadata": { "languages": ["es", "en"] },
-			"description": "Plataformas clásicas con puzzles."
-		}
-	]
-}
-```
-
-> Nota: la aplicación lee tanto top-level arrays como objetos wrapper con `games`. En la versión actual la escritura puede sobrescribir con un array puro; si prefieres preservar `meta` se puede adaptar `JsonDatabase` para mantener y actualizar `meta.nextId`.
+No se usa wrapper con meta ni games. El JSON es directamente un array para simplificar la lectura y escritura.
 
 ---
 
-## 2) Modelo de datos (clases Java)
+## 2. Modelo de datos (clases Java)
 
-Clases principales (ubicación: `src/main/java/com/juegos`):
+Ubicacion: src/main/java/com/juegos
 
-- `Videojuego` (POJO)
-	- Campos: `id`, `title`, `developer`, `releaseYear`, `genres`, `platforms`, `multiplayer`, `priceCents`, `available`, `rating`, `tags`, `metadata`, `description`.
-	- Constructor vacío, getters/setters con validaciones, `toString()`, `equals()` y `hashCode()` por `id`.
+Clases principales:
 
-- `Videojuego.Rating` y `Videojuego.Metadata` (clases anidadas).
+- Videojuego: POJO con los campos del JSON (getters y setters simples)
+- JsonDatabase: Lee y escribe el archivo JSON usando Gson
+- GestorDocumentos: Logica CRUD y validaciones basicas
+- MainFrame: Interfaz grafica Swing (formulario, tabla, botones)
+- Main: Punto de entrada de la aplicacion
 
-- `JsonDatabase`
-	- Lectura/escritura JSON con Gson (`cargarDatos()` y `guardarDatos()`), manejo de errores y singleton.
+Diagrama de flujo:
 
-- `GestorDocumentos`
-	- Lógica CRUD y validaciones de negocio. Usa `JsonDatabase` para persistencia.
-
-- `MainFrame` y `Main`
-	- Interfaz Swing y lanzador de UI.
-
-Diagrama simplificado (textual):
-
-`MainFrame -> GestorDocumentos -> JsonDatabase -> fichero JSON`
+Usuario -&gt; MainFrame -&gt; GestorDocumentos -&gt; JsonDatabase -&gt; videojuegos_db.json
 
 ---
 
-## 3) Comparación: XML vs JSON vs SQL
+## 3. Comparacion: JSON vs XML vs SQL
 
-a) Ejemplo en XML (equivalente al JSON anterior):
+a) Representacion en XML (equivalente):
 
-```xml
-<library>
-	<games>
-		<game>
-			<id>1</id>
-			<title>Aventuras en Pixelandia</title>
-			<developer>IndieStudio</developer>
-			<!-- ... -->
-		</game>
-	</games>
-</library>
-```
+&lt;videojuegos&gt;
+    &lt;videojuego&gt;
+        &lt;id&gt;1&lt;/id&gt;
+        &lt;titulo&gt;Aventuras en Pixelandia&lt;/titulo&gt;
+        &lt;desarrollador&gt;IndieStudio&lt;/desarrollador&gt;
+        &lt;anio&gt;2021&lt;/anio&gt;
+        &lt;generos&gt;
+            &lt;genero&gt;Aventura&lt;/genero&gt;
+            &lt;genero&gt;Plataformas&lt;/genero&gt;
+        &lt;/generos&gt;
+        &lt;plataformas&gt;
+            &lt;plataforma&gt;Windows&lt;/plataforma&gt;
+            &lt;plataforma&gt;Linux&lt;/plataforma&gt;
+        &lt;/plataformas&gt;
+        &lt;precio&gt;14.99&lt;/precio&gt;
+        &lt;disponible&gt;true&lt;/disponible&gt;
+        &lt;descripcion&gt;Plataformas clasicas con puzzles.&lt;/descripcion&gt;
+    &lt;/videojuego&gt;
+&lt;/videojuegos&gt;
 
-b) Modelo SQL (tablas sugeridas):
+b) Modelo relacional (SQL):
 
-- `games` (id PK, title, developer, release_year, multiplayer, price_cents, available, description)
-- `genres` (id, game_id FK -> games.id, genre)
-- `platforms` (id, game_id FK, platform)
+Tabla videojuegos:
+- id (clave primaria)
+- titulo
+- desarrollador
+- anio
+- precio
+- disponible
+- descripcion
 
-c) Ventajas/desventajas de JSON documental:
+Tablas adicionales para listas:
+- generos: id, videojuego_id (clave foranea), nombre
+- plataformas: id, videojuego_id (clave foranea), nombre
 
-- Ventajas: flexibilidad, mapping directo a POJOs, legibilidad, portable.
-- Desventajas: ausencia de esquema estricto, consultas relacionales complejas, concurrencia/transacciones manuales.
+c) Comparativa:
+
+JSON (este proyecto):
+- Estructura: Array de objetos
+- Legibilidad: Alta, sintaxis ligera
+- Relaciones: Embebidas (arrays dentro del objeto)
+- Esquema: Flexible, sin restricciones rigidas
+- Consultas: Recorrido en codigo con streams
+- Persistencia: Archivo de texto unico
+
+XML:
+- Estructura: Arbol de etiquetas
+- Legibilidad: Verboso, muchas etiquetas
+- Relaciones: Embebidas
+- Esquema: Flexible, validable con XSD
+- Consultas: XPath o XQuery
+- Persistencia: Archivo de texto unico
+
+SQL:
+- Estructura: Tablas relacionales
+- Legibilidad: Requiere conocer el esquema
+- Relaciones: Claves foraneas (FK)
+- Esquema: Rigido, tipado fuerte
+- Consultas: SQL (SELECT, JOIN, etc.)
+- Persistencia: Motor de base de datos
+
+En este proyecto se eligio JSON porque permite guardar la informacion de forma directa, legible y sin necesidad de un gestor de bases de datos externo.
 
 ---
 
-## 4) Capturas de funcionamiento (nombres / sugerencias)
+## 4. Capturas de funcionamiento
 
-Guarda capturas en `screenshots/` con los siguientes nombres:
+Guarda las capturas en una carpeta screenshots/ con estos nombres:
 
-- `01_inicio_carga.png`
-- `02_añadir_campos.png`, `02_añadir_resultado.png`, `02_añadir_json.png`
-- `03_modificar_before.png`, `03_modificar_after.png`
-- `04_eliminar_confirm.png`, `04_eliminar_after.png`
-- `05_busqueda_result.png`, `05_busqueda_noresult.png`
-- `06_validacion_error.png`
-- `07_reinicio_persistencia.png`
-
-> Nota: las capturas deben tomarse localmente; aquí se indican los nombres y dónde guardarlas.
-
----
-
-## 5) Manual de usuario (operaciones principales)
-
-- **Añadir**: rellenar campos obligatorios (`Título`, `Developer`, `Año`) y pulsar `Añadir`.
-- **Modificar**: seleccionar fila, editar campos y pulsar `Modificar`.
-- **Eliminar**: seleccionar fila y pulsar `Eliminar` (confirmar en diálogo).
-- **Buscar**: seleccionar campo y escribir término; búsqueda parcial y case-insensitive.
-- **Limpiar**: restaura la tabla completa y limpia los campos.
-
-Mensajes y validaciones: la UI muestra `JOptionPane` con errores claros y el `statusLabel` refleja el estado.
+01_inicio.png - Ventana principal con datos cargados desde el JSON
+02_anadir_campos.png - Campos rellenos antes de pulsar Anadir
+02_anadir_resultado.png - El nuevo juego aparece en la tabla
+02_anadir_json.png - El archivo JSON actualizado con el nuevo registro
+03_modificar_antes.png - Fila seleccionada con datos originales
+03_modificar_despues.png - Tabla actualizada tras la modificacion
+04_eliminar_confirmar.png - Dialogo de confirmacion de eliminacion
+04_eliminar_despues.png - Tabla sin el registro eliminado
+05_busqueda_resultado.png - Resultados de una busqueda con coincidencias
+05_busqueda_vacia.png - Busqueda sin resultados
+06_error_validacion.png - Mensaje de error (ejemplo: titulo vacio)
+07_reinicio.png - App cerrada y vuelta a abrir; los datos persisten
 
 ---
 
-## 6) Manual de instalación
+## 5. Manual de usuario
+
+Anadir un videojuego:
+1. Rellena los campos: Titulo, Desarrollador, Ano, Generos (separados por coma), Plataformas (separadas por coma), Precio y Descripcion.
+2. Marca o desmarca la casilla Disponible.
+3. Pulsa el boton Anadir.
+4. Aparecera el nuevo juego en la tabla y se guardara automaticamente en el JSON.
+
+Modificar un videojuego:
+1. Haz clic en una fila de la tabla para cargar sus datos en el formulario.
+2. Edita los campos que quieras cambiar.
+3. Pulsa Modificar.
+4. La tabla y el JSON se actualizaran.
+
+Eliminar un videojuego:
+1. Selecciona una fila de la tabla.
+2. Pulsa Eliminar.
+3. Confirma en el cuadro de dialogo.
+4. El juego desaparecera de la tabla y del JSON.
+
+Buscar:
+1. Selecciona en el desplegable el campo por el que quieres buscar (titulo, desarrollador o descripcion).
+2. Escribe el texto a buscar.
+3. Pulsa Buscar.
+4. La tabla mostrara solo los resultados que contengan ese texto (busqueda parcial, sin distinguir mayusculas ni minusculas).
+5. Pulsa Limpiar busqueda para ver todos los registros de nuevo.
+
+Limpiar campos:
+- Pulsa Limpiar campos para vaciar el formulario y deseleccionar la tabla.
+
+---
+
+## 6. Manual de instalacion
 
 Requisitos:
+- Java 17 (JDK)
+- Maven 3.9 o superior
+- VS Code (u otro IDE Java) con la extension Extension Pack for Java
 
-- Java 17 (JDK 17)
-- Maven 3.9+
+Pasos:
+1. Clona o descarga este repositorio.
+2. Abre la carpeta del proyecto en VS Code.
+3. Abre una terminal y ejecuta:
+   mvn clean compile
+4. Para ejecutar la aplicacion:
+   mvn exec:java -Dexec.mainClass="com.juegos.Main"
+   O pulsa F5 en VS Code si tienes configurado el launch.json.
 
-Compilar y ejecutar:
-
-```powershell
-mvn clean compile
-mvn exec:java -Dexec.mainClass="com.juegos.Main"
-```
-
-Generar JAR ejecutable: configura `maven-shade-plugin` o `maven-assembly-plugin` en `pom.xml` y ejecuta `mvn package`.
-
----
-
-## 7) Gestión de tareas GitHub
-
-Usa Issues/Projects para gestionar tareas. Inserta capturas del tablero en `docs/screenshots/board_issues.png` si quieres documentar el flujo.
-
----
-
-## 8) Conclusión personal
-
-Aprendizajes:
-
-- Manejo de Gson para serialización/deserialización.
-- Diseño de validaciones en la capa de negocio y UI.
-- Uso de Swing para una UI sencilla y gestión de persistencia a archivo.
-
-Dificultades y mejoras futuras:
-
-- Preservar `meta.nextId` al guardar y usarlo para autoincremento.
-- Añadir tests unitarios, empaquetado en `fat-jar` y mejoras de concurrencia.
+Generar JAR ejecutable (opcional):
+Si quieres distribuir la aplicacion sin el codigo fuente, anade al pom.xml el plugin maven-shade-plugin y ejecuta:
+   mvn package
+Se generara un .jar en la carpeta target/.
 
 ---
 
-Soporte / próximos pasos
+## 7. Gestion de tareas en GitHub
 
-Si quieres que implemente preservación de `meta.nextId`, añada un `fat-jar` o incluya capturas de ejemplo, dime cuál de las opciones prefieres.
+Este proyecto se ha gestionado mediante Issues de GitHub. Las tareas definidas incluyen:
 
-*** End Documentation
+- Crear estructura del proyecto con Maven
+- Definir clase Videojuego (modelo de datos)
+- Implementar lectura y escritura JSON con Gson
+- Crear logica CRUD (GestorDocumentos)
+- Disenar interfaz grafica Swing
+- Implementar busqueda de documentos
+- Validar datos de entrada
+- Redactar documentacion y capturas
 
+Inserta aqui una captura de tu tablero de Issues de GitHub: screenshots/github_issues.png
+
+---
+
+## 8. Conclusion personal
+
+Este proyecto me ha servido para comprender como funciona una base de datos documental sin necesidad de un sistema gestor complejo. Al usar un simple archivo JSON, he podido enfocarme en la logica de negocio (CRUD, validaciones, busqueda) y en la interfaz de usuario, sin depender de configuraciones externas como MySQL o PostgreSQL.
+
+He aprendido a:
+- Usar Gson para convertir objetos Java a JSON y viceversa.
+- Separar responsabilidades: modelo, persistencia, logica e interfaz.
+- Gestionar un flujo de trabajo con GitHub Issues.
+
+Como mejora futura, se podria anadir un empaquetado automatico en JAR ejecutable o incluir filtros de busqueda mas avanzados, pero para los requisitos academicos actuales la aplicacion cumple con todas las funcionalidades solicitadas.

@@ -1,15 +1,22 @@
 package com.juegos;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 
 public class Main {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
             } catch (Exception ignored) {}
-            MainFrame frame = new MainFrame();
-            frame.setVisible(true);
+            new MainFrame().setVisible(true);
         });
     }
 }
+
+/*
+ * USO DE INTELIGENCIA ARTIFICIAL:
+ * - La estructura base del proyecto, partes de la interfaz gráfica Swing luego 
+ *   ciertas funcionalidads JSON fueron generadas y posteriormente simplificadas con
+ *   asistencia de IA.
+ * - Revisé manualmente todo para ajustarme al enunciado 
+ */
